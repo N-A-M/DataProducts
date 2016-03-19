@@ -3,16 +3,35 @@
 # the ouptput is then rendered to the output.
 
 data(mtcars)
-library("ggplot2")
+require(shiny)
+require("googleVis")
 
 shinyServer(
     function(input , output){
         df <- data.frame(mpg=mtcars$mpg
-                         ,cyl=as.factor(mtcars$cyl)
+                         ,disp=mtcars$disp
                          ,hp=mtcars$hp
+                         ,drat=mtcars$drat
+                         ,wt=mtcars$wt
+                         ,qsec=mtcars$qsec
+                         ,vs=mtcars$vs
+                         ,am=mtcars$am
+                         ,carb=mtcars$carb
                          ,gear=mtcars$gear
-                         )
-        p1 <- ggplot(df)+geom_point(aes(x=get(input$carsParamID),y=mpg)) 
-        output$newPlot<-renderPlot(p1)
+        )
+        sdf<-reactive({
+            d<-df[,c("mpg",input$params),drop=FALSE]
+            return( as.data.frame(d))
+        })
+        output$newPlot <- renderGvis({
+            validate(need(input$params,'Check at least one parameter.'))
+            gvisScatterChart(
+                sdf(), 
+                options=list(
+                    width=800
+                    ,height=550 
+                    ,trendlines="{0: { type: 'exponential'}}"))
+        }) 
+        
     }
-    )
+)
